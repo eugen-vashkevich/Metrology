@@ -1,0 +1,45 @@
+let number = 10;
+
+if (number > 0) {
+  console.log("Число положительное");
+} else if (number < 0) {
+  console.log("Число отрицательное");
+} else if (number === 0) {
+  console.log("Число равно нулю");
+} else {
+  console.log("Число неопределено");
+}
+
+// Цикл for
+for (let i = 0; i < 5; i++) {
+  console.log("Итерация цикла for:", i);
+}
+
+// Побитовые операции
+let a = 5 & 3; // побитовое И
+let b = 10 | 2; // побитовое ИЛИ
+let c = 4 ^ 6; // побитовое исключающее ИЛИ
+let d = ~12; // побитовое отрицание
+let e = 15 << 2; // побитовый сдвиг влево
+let f = 15 >> 2; // побитовый сдвиг вправо
+let g = -10 >>> 2; // беззнаковый побитовый сдвиг вправо
+
+console.log("a:", a);
+console.log("b:", b);
+console.log("c:", c);
+console.log("d:", d);
+console.log("e:", e);
+console.log("f:", f);
+console.log("g:", g);
+
+// Логические операторы
+let x = true;
+let y = false;
+
+let result1 = x && y; // логическое И
+let result2 = x || y; // логическое ИЛИ
+let result3 = !x; // логическое НЕ
+
+console.log("result1:", result1);
+console.log("result2:", result2);
+console.log("result3:", result3);
