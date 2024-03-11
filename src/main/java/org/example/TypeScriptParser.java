@@ -1,8 +1,14 @@
 package org.example;
 
+import org.apache.poi.ss.usermodel.*;
+import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.AbstractMap;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -10,6 +16,8 @@ import java.util.regex.Pattern;
 
 public class TypeScriptParser {
    private Map<String, Integer> operatorMap;
+
+   private Map<String, Integer> variabalse;
    private Map<String, Integer> operandMap;
 
     public TypeScriptParser(){
@@ -28,12 +36,44 @@ public class TypeScriptParser {
             findComparisonOperator(sourceCode);
             findLogicOperators(sourceCode);
             findBitsOperators(sourceCode);
+            findTernar(sourceCode);
+            findTipization(sourceCode);
             subtractElseIf();
+            variabalse=countVariableUsage(sourceCode);
+            operatorMap.putAll(variabalse);
+            writeMapToExcel(operatorMap, "/home/eugen/Metra/test.ods");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
+    public static void writeMapToExcel(Map<String, Integer> data, String filePath) throws IOException {
+        Workbook workbook = new SXSSFWorkbook();
+        Sheet sheet = workbook.createSheet("Data");
 
+        Row headerRow = sheet.createRow(0);
+        headerRow.createCell(0).setCellValue("Function Name");
+        headerRow.createCell(1).setCellValue("Call Count");
+
+        int rowNum = 1;
+        for (Map.Entry<String, Integer> entry : data.entrySet()) {
+            Row row = sheet.createRow(rowNum++);
+            row.createCell(0).setCellValue(entry.getKey());
+            row.createCell(1).setCellValue(entry.getValue());
+        }
+
+        // Отслеживаем столбцы перед вызовом autoSizeColumn
+//        sheet.trackAllColumnsForAutoSizing(); // Добавлено
+
+        for (int i = 0; i < 2; i++) {
+            sheet.autoSizeColumn(i);
+        }
+
+        try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
+            workbook.write(outputStream);
+        }
+
+        workbook.close();
+    }
     //If statements
     private void findIfStatements(String sourceCode){
         countOccurrences(sourceCode, "else if");
@@ -74,15 +114,18 @@ public class TypeScriptParser {
         int minusminus = operatorMap.getOrDefault("--", 0);
         int u = operatorMap.getOrDefault("&", 0);
         int uu = operatorMap.getOrDefault("&&", 0);
-        int r = operatorMap.getOrDefault("|", 0);
-        int rr = operatorMap.getOrDefault("||", 0);
-        int l = operatorMap.getOrDefault(">>", 0);
-        int ll = operatorMap.getOrDefault(">>>", 0);
         operatorMap.put("if", ifValue - elseIfValue);
         operatorMap.put("else", elseValue - elseIfValue);
         operatorMap.put("+", plus-plusplus*2);
         operatorMap.put("-", minus-minusminus*2);
         operatorMap.put("&", u-uu*2);
+        operatorMap.put("!", operatorMap.getOrDefault("!", 0)-operatorMap.getOrDefault("!=",0)-operatorMap.getOrDefault("!==",0));
+        operatorMap.put("%", operatorMap.getOrDefault("%", 0)-operatorMap.getOrDefault("%=",0));
+        operatorMap.put("|", operatorMap.getOrDefault("|", 0)-operatorMap.getOrDefault("||", 0)*2);
+        operatorMap.put(">>", operatorMap.getOrDefault(">>",0)-operatorMap.getOrDefault(">>>", 0));
+        operatorMap.put(">", operatorMap.getOrDefault(">", 0)-operatorMap.getOrDefault(">>>",0)*3-operatorMap.getOrDefault(">>",0)*2);
+        operatorMap.put("<", operatorMap.getOrDefault("<", 0)-operatorMap.getOrDefault("<<",0)*2);
+
 
 
     }
@@ -213,40 +256,163 @@ public class TypeScriptParser {
     }
 
     // Comparison operators
-
-    private void findComparisonOperator(String sourceCode){
-        operatorMap.put("==", countArithmetic(sourceCode, "\\=="));
-        operatorMap.put("!=", countArithmetic(sourceCode, "\\!="));
-        operatorMap.put("===", countArithmetic(sourceCode, "\\==="));
-        operatorMap.put("!==", countArithmetic(sourceCode, "\\!=="));
-        operatorMap.put(">", countArithmetic(sourceCode, "\\>"));
-        operatorMap.put("<", countArithmetic(sourceCode, "\\<"));
-        operatorMap.put(">=", countArithmetic(sourceCode, "\\>="));
-        operatorMap.put("<=", countArithmetic(sourceCode, "\\<="));
+    private void findComparisonOperator(String sourceCode) {
+        String temp = sourceCode;
+        operatorMap.put("===", countAndRemoveOperators(temp, "\\==="));
+        temp = removeNextEqualityOperator(temp, "===");
+        operatorMap.put("!==", countAndRemoveOperators(temp, "\\!=="));
+        temp = removeNextEqualityOperator(temp, "!==");
+        operatorMap.put("!=", countAndRemoveOperators(temp, "\\!="));
+        temp = removeNextEqualityOperator(temp, "!=");
+        operatorMap.put("==", countAndRemoveOperators(temp, "\\=="));
+        temp = removeNextEqualityOperator(temp, "==");
+        operatorMap.put(">=", countAndRemoveOperators(temp, "\\>="));
+        temp = removeNextEqualityOperator(temp, ">=");
+        operatorMap.put("<=", countAndRemoveOperators(temp, "\\<="));
+        temp = removeNextEqualityOperator(temp, "<=");
+        operatorMap.put(">", countAndRemoveOperators(temp, "\\>"));
+        temp = removeNextEqualityOperator(temp, ">");
+        operatorMap.put("<", countAndRemoveOperators(temp, "\\<"));
     }
 
+    private int countAndRemoveOperators(String sourceCode, String regex) {
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(sourceCode);
+        int count = 0;
+
+        while (matcher.find()) {
+            count++;
+            sourceCode = sourceCode.replaceFirst(regex, ""); // Удаляем найденный оператор
+        }
+
+        return count;
+    }
+
+    private String removeNextEqualityOperator(String sourceCode, String operator) {
+        int index = sourceCode.indexOf(operator);
+        if (index >= 0) {
+            sourceCode = sourceCode.substring(0, index) + sourceCode.substring(index + operator.length());
+        }
+        return sourceCode;
+    }
     // Logic operators
 
     private void findLogicOperators(String sourceCode){
         operatorMap.put("!", countArithmetic(sourceCode, "\\!"));
         operatorMap.put("&&", countArithmetic(sourceCode, "\\&&"));
-        operatorMap.put("||", countArithmetic(sourceCode, "\\||"));
+        operatorMap.put("||", countArithmetic(sourceCode, "\\|\\|"));
+        operatorMap.put("return", countArithmetic(sourceCode, "return"));
+        operatorMap.put("break", countArithmetic(sourceCode, "break"));
+        operatorMap.put("continue", countArithmetic(sourceCode, "continue"));
+
+
     }
 
     // Bits operators
     private void findBitsOperators(String sourceCode) {
-        operatorMap.put("&", countArithmetic(sourceCode, "&"));
-        operatorMap.put("|", countArithmetic(sourceCode, "\\|"));
-        operatorMap.put("^", countArithmetic(sourceCode, "\\^"));
-        operatorMap.put("~", countArithmetic(sourceCode, "~"));
-        operatorMap.put("<<", countArithmetic(sourceCode, "<<"));
-        operatorMap.put(">>>", countArithmetic(sourceCode, ">>>"));
-        operatorMap.put(">>", countArithmetic(sourceCode, ">>"));
+        String temp = sourceCode;
+        operatorMap.put("&", countBits(temp, "&"));
+        operatorMap.put("|", countBits(temp, "\\|"));
+        operatorMap.put("^", countBits(temp, "\\^"));
+        operatorMap.put("~", countBits(temp, "~"));
+        operatorMap.put("<<", countBits(temp, "<<"));
+        operatorMap.put(">>>", countBits(temp, ">>>"));
+        operatorMap.put(">>", countBits(temp, ">>"));
+    }
+
+    private static int countBits(String input, String operator) {
+        Pattern pattern = Pattern.compile(operator);
+        Matcher matcher = pattern.matcher(input);
+
+        int count = 0;
+        while (matcher.find()) {
+            count++;
+        }
+
+        return count;
+    }
+
+    private static Map.Entry<String, Integer> removeMatches(String input, String pattern) {
+        String updatedInput = input.replaceAll(pattern, "");
+        int removedCount = (input.length() - updatedInput.length()) / pattern.length();
+        return new AbstractMap.SimpleEntry<>(updatedInput, removedCount);
     }
 
 
+    //Ternar operator
+
+    private void findTernar(String sourceCode){
+        operatorMap.put("ternar", countTernaryOperators(sourceCode));
+    }
+
+    private int countTernaryOperators(String sourceCode) {
+        String regex = "\\?.+?(:[^{]|\\([^)]*\\))";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(sourceCode);
+
+        int count = 0;
+        while (matcher.find()) {
+            count++;
+        }
+
+        return count;
+    }
+
+    private void findTipization(String sourceCode){
+        operatorMap.put("as",countAsOccurrences(sourceCode));
+        operatorMap.put("instanceof", countArithmetic(sourceCode, "instanceof"));
+        operatorMap.put("[]", countArithmetic(sourceCode, "\\w+\\[[^\\]]*\\]"));
+
+    }
+
+    private int countAsOccurrences(String sourceCode) {
+        int count = 0;
+        int index = 0;
+
+        while ((index = sourceCode.indexOf("as", index)) != -1) {
+            if (!Character.isLetterOrDigit(sourceCode.charAt(index - 1)) &&
+                    !Character.isLetterOrDigit(sourceCode.charAt(index + 2))) {
+                count++;
+            }
+            index += 2;
+        }
+
+        return count;
+    }
+
+
+    public static Map<String, Integer> countVariableUsage(String sourceCode) {
+        Pattern declarationPattern = Pattern.compile("\\b(let|const|var)\\s+([a-zA-Z_$][a-zA-Z0-9_$]*)");
+        Pattern usagePattern = Pattern.compile("\\b([a-zA-Z_$][a-zA-Z0-9_$]*)\\b(?![^']*'[^']*')");
+        Matcher declarationMatcher = declarationPattern.matcher(sourceCode);
+        Matcher usageMatcher = usagePattern.matcher(sourceCode);
+
+        Map<String, Integer> variableUsageMap = new HashMap<>();
+        Map<String, Integer> variableDeclarationMap = new HashMap<>();
+
+
+        while (declarationMatcher.find()) {
+            String variableName = declarationMatcher.group(2);
+            variableDeclarationMap.put(variableName, variableDeclarationMap.getOrDefault(variableName, 0) + 1);
+        }
+
+        while (usageMatcher.find()) {
+            String variableName = usageMatcher.group(1);
+            if (variableDeclarationMap.containsKey(variableName)) {
+                variableUsageMap.put(variableName, variableUsageMap.getOrDefault(variableName, 0) + 1);
+            }
+        }
+
+        return variableUsageMap;
+    }
+
     public void PrintMap(){
         for (Map.Entry<String, Integer> entry : operatorMap.entrySet()) {
+            String key = entry.getKey();
+            Integer value = entry.getValue();
+            System.out.println("Ключ: " + key + ", Значение: " + value);
+        }
+        for (Map.Entry<String, Integer> entry : variabalse.entrySet()) {
             String key = entry.getKey();
             Integer value = entry.getValue();
             System.out.println("Ключ: " + key + ", Значение: " + value);

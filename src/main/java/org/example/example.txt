@@ -9,11 +9,23 @@ if (number > 0) {
 } else {
   console.log("Число неопределено");
 }
-
+!==
 // Цикл for
 for (let i = 0; i < 5; i++) {
   console.log("Итерация цикла for:", i);
+}\
+
+let obj: any = new MyClass();
+
+if (obj instanceof MyClass) {
+  console.log("obj является экземпляром MyClass");
+} else {
+  console.log("obj не является экземпляром MyClass");
 }
+
+as
+
+arr[1];
 
 // Побитовые операции
 let a = 5 & 3; // побитовое И
@@ -24,6 +36,10 @@ let e = 15 << 2; // побитовый сдвиг влево
 let f = 15 >> 2; // побитовый сдвиг вправо
 let g = -10 >>> 2; // беззнаковый побитовый сдвиг вправо
 
+a %= 2;
+
+let h = 2 % 4;
+
 console.log("a:", a);
 console.log("b:", b);
 console.log("c:", c);
@@ -31,6 +47,7 @@ console.log("d:", d);
 console.log("e:", e);
 console.log("f:", f);
 console.log("g:", g);
+console.log("h:", h);
 
 // Логические операторы
 let x = true;
@@ -40,6 +57,48 @@ let result1 = x && y; // логическое И
 let result2 = x || y; // логическое ИЛИ
 let result3 = !x; // логическое НЕ
 
+|
+continue
+break
+return
+||
+
 console.log("result1:", result1);
 console.log("result2:", result2);
 console.log("result3:", result3);
+
+// Тернарный оператор
+let isPositive = number > 0 ? true : false;
+console.log("isPositive:", isPositive);
+
+function add(a: number, b: number): number {
+    return a + b;
+}
+
+function subtract(a: number, b: number): number {
+    return a - b;
+}
+
+function multiply(a: number, b: number): number {
+    return a * b;
+}
+
+function divide(a: number, b: number): number {
+    if (b === 0) {
+        throw new Error('Division by zero is not allowed.');
+    }
+    return a / b;
+}
+
+const x = 5;
+const y = 3;
+
+const sum = add(x, y);
+console.log(`Sum: ${sum}`);
+
+
+const product = multiply(x, y);
+console.log(`Product: ${product}`);
+
+const quotient = divide(x, y);
+console.log(`Quotient: ${quotient}`);
