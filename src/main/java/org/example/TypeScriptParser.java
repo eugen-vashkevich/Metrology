@@ -1,7 +1,8 @@
 package org.example;
 
 import org.apache.poi.ss.usermodel.*;
-import org.apache.poi.xssf.streaming.SXSSFWorkbook;
+import org.apache.poi.xssf.usermodel.XSSFRow;
+import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.FileOutputStream;
@@ -41,40 +42,32 @@ public class TypeScriptParser {
             subtractElseIf();
             variabalse=countVariableUsage(sourceCode);
             operatorMap.putAll(variabalse);
-            writeMapToExcel(operatorMap, "/home/eugen/Metra/test.ods");
+            writeMapToExcel(operatorMap, "C:\\Metra1\\src\\main\\java\\org\\example\\test.xlsx");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-    public static void writeMapToExcel(Map<String, Integer> data, String filePath) throws IOException {
-        Workbook workbook = new SXSSFWorkbook();
-        Sheet sheet = workbook.createSheet("Data");
+    public void writeMapToExcel(Map<String, Integer> map1, String filepath) throws IOException {
+        XSSFWorkbook workbook = new XSSFWorkbook();
+        XSSFSheet sheet = workbook.createSheet("sheet1");
 
-        Row headerRow = sheet.createRow(0);
-        headerRow.createCell(0).setCellValue("Function Name");
-        headerRow.createCell(1).setCellValue("Call Count");
+        HashMap<String, Integer> map = (HashMap<String, Integer>) map1;
+        int rowno = 0;
 
-        int rowNum = 1;
-        for (Map.Entry<String, Integer> entry : data.entrySet()) {
-            Row row = sheet.createRow(rowNum++);
+        for (HashMap.Entry<String, Integer> entry : map.entrySet()) {
+            XSSFRow row = sheet.createRow(rowno++);
             row.createCell(0).setCellValue(entry.getKey());
-            row.createCell(1).setCellValue(entry.getValue());
+            row.createCell(1).setCellValue(String.valueOf(entry.getValue()));
         }
 
-        // Отслеживаем столбцы перед вызовом autoSizeColumn
-//        sheet.trackAllColumnsForAutoSizing(); // Добавлено
-
-        for (int i = 0; i < 2; i++) {
-            sheet.autoSizeColumn(i);
-        }
-
-        try (FileOutputStream outputStream = new FileOutputStream(filePath)) {
-            workbook.write(outputStream);
-        }
-
-        workbook.close();
+        FileOutputStream file = new FileOutputStream(filepath);
+        workbook.write(file);
+        file.close();
+        System.out.println("Data Copied to Excel");
     }
-    //If statements
+
+
+        //If statements
     private void findIfStatements(String sourceCode){
         countOccurrences(sourceCode, "else if");
         countOccurrences(sourceCode, "if");
