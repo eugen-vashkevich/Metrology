@@ -3,6 +3,9 @@ package org.example;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.mozilla.javascript.Parser;
+import org.mozilla.javascript.ast.*;
+import org.mozilla.javascript.json.JsonParser;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -10,6 +13,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.AbstractMap;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,6 +32,9 @@ public class TypeScriptParser {
         try {
             // Чтение содержимого файла
             String sourceCode = Files.readString(Path.of(filePath));
+            List<String> lines = Files.readAllLines(Path.of(filePath));
+            operatorMap.put("Количество строк в файле: ", lines.size());
+            operatorMap.put("Объем программы: ", sourceCode.length());
             // Поиск всех вхождений ключевых слов
             findIfStatements(sourceCode);
             findLoops(sourceCode);
@@ -39,7 +46,7 @@ public class TypeScriptParser {
             findTernar(sourceCode);
             findTipization(sourceCode);
             subtractElseIf();
-            variabalse=countVariableUsage(sourceCode);
+            variabalse=countVariables(sourceCode);
             operatorMap.putAll(variabalse);
             operatorMap.putAll(countFunctionCalls(sourceCode));
             writeMapToExcel(operatorMap, "C:\\Metra1\\src\\main\\java\\org\\example\\test.xlsx");
@@ -388,30 +395,17 @@ public class TypeScriptParser {
         return count;
     }
 
+    private  Map<String, Integer> countVariables(String sourceCode) {
+        Map<String, Integer> variableCountMap = new HashMap<>();
+        Pattern variablePattern = Pattern.compile("\\b(let|const|var)\\s+([a-zA-Z_$][a-zA-Z_$0-9]*)\\b");
 
-    public static Map<String, Integer> countVariableUsage(String sourceCode) {
-        Pattern declarationPattern = Pattern.compile("\\b(let|const|var)\\s+([a-zA-Z_$][a-zA-Z0-9_$]*)");
-        Pattern usagePattern = Pattern.compile("\\b([a-zA-Z_$][a-zA-Z0-9_$]*)\\b(?![^']*'[^']*')");
-        Matcher declarationMatcher = declarationPattern.matcher(sourceCode);
-        Matcher usageMatcher = usagePattern.matcher(sourceCode);
-
-        Map<String, Integer> variableUsageMap = new HashMap<>();
-        Map<String, Integer> variableDeclarationMap = new HashMap<>();
-
-
-        while (declarationMatcher.find()) {
-            String variableName = declarationMatcher.group(2);
-            variableDeclarationMap.put(variableName, variableDeclarationMap.getOrDefault(variableName, 0) + 1);
+        Matcher matcher = variablePattern.matcher(sourceCode);
+        while (matcher.find()) {
+            String variableName = matcher.group(2);
+            variableCountMap.put(variableName, variableCountMap.getOrDefault(variableName, 0) + 1);
         }
 
-        while (usageMatcher.find()) {
-            String variableName = usageMatcher.group(1);
-            if (variableDeclarationMap.containsKey(variableName)) {
-                variableUsageMap.put(variableName, variableUsageMap.getOrDefault(variableName, 0) + 1);
-            }
-        }
-
-        return variableUsageMap;
+        return variableCountMap;
     }
 
     public void PrintMap(){
