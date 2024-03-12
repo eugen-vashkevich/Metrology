@@ -56,16 +56,11 @@ public class TypeScriptParser {
 
     private Map<String, Integer> countFunctionCalls(String fileContent) {
         Map<String, Integer> functionCallCount = new HashMap<>();
-        Pattern functionPattern = Pattern.compile("function\\s+(\\w+)\\s*\\(.*?\\)\\s*");
 
-        Matcher matcher = functionPattern.matcher(fileContent);
-        while (matcher.find()) {
-            String functionName = matcher.group(1);
-            System.out.println(1);
-            functionCallCount.put(functionName, functionCallCount.getOrDefault(functionName, 0) + 1);
-        }
+        Matcher matcher;
 
-        Pattern callPattern = Pattern.compile("(\\w+)\\(.*?\\);");
+
+        Pattern callPattern = Pattern.compile("(\\w+)\\(.*?\\)");
         matcher = callPattern.matcher(fileContent);
         while (matcher.find()) {
             String functionName = matcher.group(1);
@@ -78,7 +73,6 @@ public class TypeScriptParser {
 
         return functionCallCount;
     }
-
 
     private static String extractFunctionName(String functionDeclaration) {
         String[] tokens = functionDeclaration.split("\\s+");
@@ -94,6 +88,10 @@ public class TypeScriptParser {
         int rowno = 0;
 
         for (HashMap.Entry<String, Integer> entry : map.entrySet()) {
+            if (entry.getValue() == 0) {
+                continue;
+            }
+
             XSSFRow row = sheet.createRow(rowno++);
             row.createCell(0).setCellValue(entry.getKey());
             row.createCell(1).setCellValue(String.valueOf(entry.getValue()));
@@ -414,17 +412,31 @@ public class TypeScriptParser {
         return count;
     }
 
-    private  Map<String, Integer> countVariables(String sourceCode) {
-        Map<String, Integer> variableCountMap = new HashMap<>();
-        Pattern variablePattern = Pattern.compile("\\b(let|const|var)\\s+([a-zA-Z_$][a-zA-Z_$0-9]*)\\b");
+    private Map<String, Integer> countVariables(String sourceCode) {
+        Map<String, Integer> variableUsageMap = new HashMap<>();
+        Pattern variableDeclarationPattern = Pattern.compile("\\b(let|const|var)\\s+([a-zA-Z_$][a-zA-Z_$0-9]*)\\b");
+        Matcher declarationMatcher = variableDeclarationPattern.matcher(sourceCode);
 
-        Matcher matcher = variablePattern.matcher(sourceCode);
-        while (matcher.find()) {
-            String variableName = matcher.group(2);
-            variableCountMap.put(variableName, variableCountMap.getOrDefault(variableName, 0) + 1);
+        // Находим все объявленные переменные и добавляем их в Map
+        while (declarationMatcher.find()) {
+            String variableName = declarationMatcher.group(2);
+            variableUsageMap.put(variableName, 0);
         }
 
-        return variableCountMap;
+        // Проходим по тексту и ищем использования переменных
+        for (Map.Entry<String, Integer> entry : variableUsageMap.entrySet()) {
+            String variableName = entry.getKey();
+            Pattern variableUsagePattern = Pattern.compile("\\b" + variableName + "\\b");
+            Matcher usageMatcher = variableUsagePattern.matcher(sourceCode);
+
+            // Считаем количество использований переменной
+            while (usageMatcher.find()) {
+                int usageCount = variableUsageMap.get(variableName);
+                variableUsageMap.put(variableName, usageCount + 1);
+            }
+        }
+
+        return variableUsageMap;
     }
 
     public void PrintMap(){
