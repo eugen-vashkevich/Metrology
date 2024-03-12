@@ -1,102 +1,61 @@
-let number = 10;
-
-if (number > 0) {
-  console.log("Число положительное");
-} else if (number < 0) {
-  console.log("Число отрицательное");
-} else if (number === 0) {
-  console.log("Число равно нулю");
-} else {
-  console.log("Число неопределено");
-}
-!==
-// Цикл for
-for (let i = 0; i < 5; i++) {
-  console.log("Итерация цикла for:", i);
-}\
-
-let obj: any = new MyClass();
-
-if (obj instanceof MyClass) {
-  console.log("obj является экземпляром MyClass");
-} else {
-  console.log("obj не является экземпляром MyClass");
+function addNumbers(a: number, b: number): number {
+  return a + b;
 }
 
-as
-
-arr[1];
-
-// Побитовые операции
-let a = 5 & 3; // побитовое И
-let b = 10 | 2; // побитовое ИЛИ
-let c = 4 ^ 6; // побитовое исключающее ИЛИ
-let d = ~12; // побитовое отрицание
-let e = 15 << 2; // побитовый сдвиг влево
-let f = 15 >> 2; // побитовый сдвиг вправо
-let g = -10 >>> 2; // беззнаковый побитовый сдвиг вправо
-
-a %= 2;
-
-let h = 2 % 4;
-
-console.log( a);
-console.log( b);
-console.log( c);
-console.log( d);
-console.log( e);
-console.log( f);
-console.log( g);
-console.log( h);
-
-
-let x = true;
-let y = false;
-
-let result1 = x && y; // логическое И
-let result2 = x || y; // логическое ИЛИ
-let result3 = !x; // логическое НЕ
-
-
-continue
-break
-return
-
-console.log("result1:", result1);
-console.log("result2:", result2);
-console.log("result3:", result3);
-
-let isPositive = number > 0 ? true : false;
-console.log("isPositive:", isPositive);
-
-function add(a: number, b: number): number {
-    return a + b;
+function sumArray(numbers: number[]): number {
+  let sum = 0;
+  for (const num of numbers) {
+    sum += num;
+  }
+  return sum;
 }
 
-function subtract(a: number, b: number): number {
-    return a - b;
+function printMessage(message: string): void {
+  console.log(message);
 }
 
-function multiply(a: number, b: number): number {
-    return a * b;
+function isEven(number: number): boolean {
+  return number % 2 === 0;
 }
 
-function divide(a: number, b: number): number {
-    if (b === 0) {
-        throw new Error('Division by zero is not allowed.');
+function findMaxNumber(numbers: number[]): number {
+  let max = numbers[0];
+  for (const num of numbers) {
+    if (num > max) {
+      max = num;
     }
-    return a / b;
+  }
+  return max;
 }
 
-const x = 5;
-const y = 3;
+function convertToUppercase(text: string): string {
+  return text.toUpperCase();
+}
 
-const sum = add(x, y);
-console.log(`Sum: ${sum}`);
+const result = addNumbers(3, 5);
+console.log("Sum:", result); // Output: Sum: 8
 
+const numbers = [1, 2, 3, 4, 5];
+const arraySum = sumArray(numbers);
+console.log("Array Sum:", arraySum);
 
-const product = multiply(x, y);
-console.log(`Product: ${product}`);
+!==
 
-const quotient = divide(x, y);
-console.log(`Quotient: ${quotient}`);
+printMessage("Hello, TypeScript");
+
+const numberToCheck = 10;
+if ( isEven(numberToCheck) ) {
+  console.log(${numberToCheck} is even.);
+} else {
+  console.log(${numberToCheck} is odd.);
+}
+
+isEven(numberToCheck);
+
+const numberList = [10, 5, 20, 8, 15];
+const maxNumber = findMaxNumber(numberList);
+console.log("Max Number:", maxNumber);
+
+const text = "hello, world";
+const uppercaseText = convertToUppercase(text);
+console.log("Uppercase Text:", uppercaseText);

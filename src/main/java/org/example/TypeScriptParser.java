@@ -3,9 +3,6 @@ package org.example;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.mozilla.javascript.Parser;
-import org.mozilla.javascript.ast.*;
-import org.mozilla.javascript.json.JsonParser;
 
 import java.io.FileOutputStream;
 import java.io.IOException;
@@ -38,6 +35,7 @@ public class TypeScriptParser {
             // Поиск всех вхождений ключевых слов
             findIfStatements(sourceCode);
             findLoops(sourceCode);
+            operatorMap.putAll(countFunctionCalls(sourceCode));
             findArithmeticOperators(sourceCode);
             findAssignmentOperator(sourceCode);
             findComparisonOperator(sourceCode);
@@ -48,7 +46,7 @@ public class TypeScriptParser {
             subtractElseIf();
             variabalse=countVariables(sourceCode);
             operatorMap.putAll(variabalse);
-            operatorMap.putAll(countFunctionCalls(sourceCode));
+
             writeMapToExcel(operatorMap, "C:\\Metra1\\src\\main\\java\\org\\example\\test.xlsx");
         } catch (IOException e) {
             e.printStackTrace();
@@ -56,19 +54,38 @@ public class TypeScriptParser {
     }
 
 
-    private static Map<String, Integer> countFunctionCalls(String fileContent) {
-        // Regular expression pattern to match function calls
-        Pattern pattern = Pattern.compile("(\\w+)\\(.*?\\);");
-        Matcher matcher = pattern.matcher(fileContent);
-
+    private Map<String, Integer> countFunctionCalls(String fileContent) {
         Map<String, Integer> functionCallCount = new HashMap<>();
+        Pattern functionPattern = Pattern.compile("function\\s+(\\w+)\\s*\\(.*?\\)\\s*");
+
+        Matcher matcher = functionPattern.matcher(fileContent);
         while (matcher.find()) {
             String functionName = matcher.group(1);
+            System.out.println(1);
             functionCallCount.put(functionName, functionCallCount.getOrDefault(functionName, 0) + 1);
+        }
+
+        Pattern callPattern = Pattern.compile("(\\w+)\\(.*?\\);");
+        matcher = callPattern.matcher(fileContent);
+        while (matcher.find()) {
+            String functionName = matcher.group(1);
+            if (functionCallCount.containsKey(functionName)) {
+                functionCallCount.put(functionName, functionCallCount.get(functionName) + 1);
+            } else {
+                functionCallCount.put(functionName, 1);
+            }
         }
 
         return functionCallCount;
     }
+
+
+    private static String extractFunctionName(String functionDeclaration) {
+        String[] tokens = functionDeclaration.split("\\s+");
+        return tokens[1];
+    }
+
+
     public void writeMapToExcel(Map<String, Integer> map1, String filepath) throws IOException {
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet("sheet1");
@@ -140,6 +157,8 @@ public class TypeScriptParser {
         operatorMap.put(">>", operatorMap.getOrDefault(">>",0)-operatorMap.getOrDefault(">>>", 0));
         operatorMap.put(">", operatorMap.getOrDefault(">", 0)-operatorMap.getOrDefault(">>>",0)*3-operatorMap.getOrDefault(">>",0)*2);
         operatorMap.put("<", operatorMap.getOrDefault("<", 0)-operatorMap.getOrDefault("<<",0)*2);
+        operatorMap.put("=", operatorMap.getOrDefault("=", 0)-operatorMap.getOrDefault("===", 0)*3-operatorMap.getOrDefault("+=", 0)-operatorMap.getOrDefault("!==", 0)*2-operatorMap.getOrDefault("<=",0)-operatorMap.getOrDefault("==", 0)*2-operatorMap.getOrDefault("-=", 0)-operatorMap.getOrDefault("%=", 0)-operatorMap.getOrDefault("!=", 0)-operatorMap.getOrDefault(">=", 0));
+
 
 
 
@@ -262,7 +281,7 @@ public class TypeScriptParser {
     // Assignment operator
 
     private void findAssignmentOperator(String sourceCode){
-        operatorMap.put("=", calculateAllMatches(sourceCode, "\\+"));
+        operatorMap.put("=", calculateAllMatches(sourceCode, "\\="));
         operatorMap.put("+=", calculateAllMatches(sourceCode, "\\+="));
         operatorMap.put("-=", calculateAllMatches(sourceCode, "\\-="));
         operatorMap.put("*=", calculateAllMatches(sourceCode, "\\*="));
