@@ -1,6 +1,5 @@
 package org.example;
 
-import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
@@ -215,17 +214,17 @@ public class TypeScriptParser {
 
     private void findArithmeticOperators(String sourceCode) {
 
-        operatorMap.put("+", countArithmetic(sourceCode, "\\+"));
-        operatorMap.put("-", countArithmetic(sourceCode, "-"));
-        operatorMap.put("*", countArithmetic(sourceCode, "\\*"));
-        operatorMap.put("/", countArithmetic(sourceCode, "/"));
-        operatorMap.put("%", countArithmetic(sourceCode, "%"));
-        operatorMap.put("++", countArithmetic(sourceCode, "\\+\\+"));
-        operatorMap.put("--", countArithmetic(sourceCode, "--"));
+        operatorMap.put("+", calculateAllMatches(sourceCode, "\\+"));
+        operatorMap.put("-", calculateAllMatches(sourceCode, "-"));
+        operatorMap.put("*", calculateAllMatches(sourceCode, "\\*"));
+        operatorMap.put("/", calculateAllMatches(sourceCode, "/"));
+        operatorMap.put("%", calculateAllMatches(sourceCode, "%"));
+        operatorMap.put("++", calculateAllMatches(sourceCode, "\\+\\+"));
+        operatorMap.put("--", calculateAllMatches(sourceCode, "--"));
 
     }
 
-    private int countArithmetic(String input, String regex) {
+    private int calculateAllMatches(String input, String regex) {
         Pattern pattern = Pattern.compile(regex);
         Matcher matcher = pattern.matcher(input);
 
@@ -240,12 +239,12 @@ public class TypeScriptParser {
     // Assignment operator
 
     private void findAssignmentOperator(String sourceCode){
-        operatorMap.put("=", countArithmetic(sourceCode, "\\+"));
-        operatorMap.put("+=", countArithmetic(sourceCode, "\\+="));
-        operatorMap.put("-=", countArithmetic(sourceCode, "\\-="));
-        operatorMap.put("*=", countArithmetic(sourceCode, "\\*="));
-        operatorMap.put("%=", countArithmetic(sourceCode, "\\%="));
-        operatorMap.put("/=", countArithmetic(sourceCode, "\\/="));
+        operatorMap.put("=", calculateAllMatches(sourceCode, "\\+"));
+        operatorMap.put("+=", calculateAllMatches(sourceCode, "\\+="));
+        operatorMap.put("-=", calculateAllMatches(sourceCode, "\\-="));
+        operatorMap.put("*=", calculateAllMatches(sourceCode, "\\*="));
+        operatorMap.put("%=", calculateAllMatches(sourceCode, "\\%="));
+        operatorMap.put("/=", calculateAllMatches(sourceCode, "\\/="));
     }
 
     // Comparison operators
@@ -291,12 +290,12 @@ public class TypeScriptParser {
     // Logic operators
 
     private void findLogicOperators(String sourceCode){
-        operatorMap.put("!", countArithmetic(sourceCode, "\\!"));
-        operatorMap.put("&&", countArithmetic(sourceCode, "\\&&"));
-        operatorMap.put("||", countArithmetic(sourceCode, "\\|\\|"));
-        operatorMap.put("return", countArithmetic(sourceCode, "return"));
-        operatorMap.put("break", countArithmetic(sourceCode, "break"));
-        operatorMap.put("continue", countArithmetic(sourceCode, "continue"));
+        operatorMap.put("!", calculateAllMatches(sourceCode, "\\!"));
+        operatorMap.put("&&", calculateAllMatches(sourceCode, "\\&&"));
+        operatorMap.put("||", calculateAllMatches(sourceCode, "\\|\\|"));
+        operatorMap.put("return", calculateAllMatches(sourceCode, "return"));
+        operatorMap.put("break", calculateAllMatches(sourceCode, "break"));
+        operatorMap.put("continue", calculateAllMatches(sourceCode, "continue"));
 
 
     }
@@ -353,8 +352,8 @@ public class TypeScriptParser {
 
     private void findTipization(String sourceCode){
         operatorMap.put("as",countAsOccurrences(sourceCode));
-        operatorMap.put("instanceof", countArithmetic(sourceCode, "instanceof"));
-        operatorMap.put("[]", countArithmetic(sourceCode, "\\w+\\[[^\\]]*\\]"));
+        operatorMap.put("instanceof", calculateAllMatches(sourceCode, "instanceof"));
+        operatorMap.put("[]", calculateAllMatches(sourceCode, "\\w+\\[[^\\]]*\\]"));
 
     }
 
