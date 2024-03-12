@@ -41,10 +41,26 @@ public class TypeScriptParser {
             subtractElseIf();
             variabalse=countVariableUsage(sourceCode);
             operatorMap.putAll(variabalse);
+            operatorMap.putAll(countFunctionCalls(sourceCode));
             writeMapToExcel(operatorMap, "C:\\Metra1\\src\\main\\java\\org\\example\\test.xlsx");
         } catch (IOException e) {
             e.printStackTrace();
         }
+    }
+
+
+    private static Map<String, Integer> countFunctionCalls(String fileContent) {
+        // Regular expression pattern to match function calls
+        Pattern pattern = Pattern.compile("(\\w+)\\(.*?\\);");
+        Matcher matcher = pattern.matcher(fileContent);
+
+        Map<String, Integer> functionCallCount = new HashMap<>();
+        while (matcher.find()) {
+            String functionName = matcher.group(1);
+            functionCallCount.put(functionName, functionCallCount.getOrDefault(functionName, 0) + 1);
+        }
+
+        return functionCallCount;
     }
     public void writeMapToExcel(Map<String, Integer> map1, String filepath) throws IOException {
         XSSFWorkbook workbook = new XSSFWorkbook();
@@ -404,10 +420,6 @@ public class TypeScriptParser {
             Integer value = entry.getValue();
             System.out.println("Ключ: " + key + ", Значение: " + value);
         }
-        for (Map.Entry<String, Integer> entry : variabalse.entrySet()) {
-            String key = entry.getKey();
-            Integer value = entry.getValue();
-            System.out.println("Ключ: " + key + ", Значение: " + value);
-        }
+
     }
 }
