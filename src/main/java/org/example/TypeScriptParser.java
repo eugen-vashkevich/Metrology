@@ -4,14 +4,12 @@ import org.apache.poi.xssf.usermodel.XSSFRow;
 import org.apache.poi.xssf.usermodel.XSSFSheet;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.AbstractMap;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -31,7 +29,6 @@ public class TypeScriptParser {
             String sourceCode = Files.readString(Path.of(filePath));
             List<String> lines = Files.readAllLines(Path.of(filePath));
             operatorMap.put("Количество строк в файле: ", lines.size());
-            operatorMap.put("Объем программы: ", sourceCode.length());
             // Поиск всех вхождений ключевых слов
             findIfStatements(sourceCode);
             findLoops(sourceCode);
@@ -44,10 +41,14 @@ public class TypeScriptParser {
             findTernar(sourceCode);
             findTipization(sourceCode);
             subtractElseIf();
-            variabalse=countVariables(sourceCode);
-            operatorMap.putAll(variabalse);
-
-            writeMapToExcel(operatorMap, "C:\\Metra1\\src\\main\\java\\org\\example\\test.xlsx");
+            operandMap=countVariables(sourceCode);
+            operandMap.put("Словарь: ", operatorMap.size()+operandMap.size());
+            int a =operandMap.getOrDefault("Словарь: ", 2);
+            int c =(int) Math.log(a);
+            int b = operatorMap.getOrDefault("Количество строк в файле: ",0);
+            operandMap.put("Объем: ", b*c);
+            writeMapToExcel(operatorMap, operandMap,"C:\\Metra1\\src\\main\\java\\org\\example\\test.xlsx", "Operators");
+//            writeMapToExcel(operandMap, "C:\\Metra1\\src\\main\\java\\org\\example\\test.xlsx", "Operands");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -80,26 +81,80 @@ public class TypeScriptParser {
     }
 
 
-    public void writeMapToExcel(Map<String, Integer> map1, String filepath) throws IOException {
-        XSSFWorkbook workbook = new XSSFWorkbook();
-        XSSFSheet sheet = workbook.createSheet("sheet1");
 
-        HashMap<String, Integer> map = (HashMap<String, Integer>) map1;
-        int rowno = 0;
-
-        for (HashMap.Entry<String, Integer> entry : map.entrySet()) {
+    public void writeMapToExcel(Map<String, Integer> operatorsMap, Map<String, Integer> operandsMap, String filePath, String nameSheet) throws IOException {
+        Iterator<Map.Entry<String, Integer>> operatorIterator = operatorsMap.entrySet().iterator();
+        while (operatorIterator.hasNext()) {
+            Map.Entry<String, Integer> entry = operatorIterator.next();
             if (entry.getValue() == 0) {
-                continue;
+                operatorIterator.remove();
             }
-
-            XSSFRow row = sheet.createRow(rowno++);
-            row.createCell(0).setCellValue(entry.getKey());
-            row.createCell(1).setCellValue(String.valueOf(entry.getValue()));
         }
 
-        FileOutputStream file = new FileOutputStream(filepath);
-        workbook.write(file);
+        Iterator<Map.Entry<String, Integer>> operandIterator = operandsMap.entrySet().iterator();
+        while (operandIterator.hasNext()) {
+            Map.Entry<String, Integer> entry = operandIterator.next();
+            if (entry.getValue() == 0) {
+                operandIterator.remove();
+            }
+        }
+
+        FileInputStream file = new FileInputStream(filePath);
+        XSSFWorkbook workbook = new XSSFWorkbook(file);
+        XSSFSheet sheet = workbook.getSheet(nameSheet);
+
+        if (sheet == null) {
+            sheet = workbook.createSheet(nameSheet);
+        }
+
+        int rowno = sheet.getLastRowNum() + 1;
+
+        XSSFRow headerRow = sheet.createRow(rowno++);
+        headerRow.createCell(0).setCellValue("Operators");
+        headerRow.createCell(1).setCellValue("Count");
+        headerRow.createCell(2).setCellValue("Operands");
+        headerRow.createCell(3).setCellValue("Count");
+
+        List<String> operatorKeys = new ArrayList<>(operatorsMap.keySet());
+        List<String> operandKeys = new ArrayList<>(operandsMap.keySet());
+        int maxRowCount = Math.max(operatorKeys.size(), operandKeys.size());
+
+        for (int i = 0; i < maxRowCount; i++) {
+            String operatorKey = i < operatorKeys.size() ? operatorKeys.get(i) : null;
+            String operandKey = i < operandKeys.size() ? operandKeys.get(i) : null;
+
+            Integer operatorCount = operatorKey != null ? operatorsMap.get(operatorKey) : null;
+            Integer operandCount = operandKey != null ? operandsMap.get(operandKey) : null;
+
+            if ((operatorKey != null && operatorCount != null && operatorCount != 0 && !operatorKey.trim().isEmpty()) ||
+                    (operandKey != null && operandCount != null && operandCount != 0 && !operandKey.isEmpty())) {
+                XSSFRow dataRow = sheet.createRow(rowno++);
+                if (operatorKey != null && operatorCount != null && operatorCount != 0 && !operatorKey.trim().isEmpty()) {
+                    dataRow.createCell(0).setCellValue(operatorKey);
+                    dataRow.createCell(1).setCellValue(String.valueOf(operatorCount));
+                }
+
+                if (operandKey != null && operandCount != null && operandCount != 0 && !operandKey.isEmpty()) {
+                    dataRow.createCell(2).setCellValue(operandKey);
+                    dataRow.createCell(3).setCellValue(String.valueOf(operandCount));
+                }
+            }
+        }
+
+        int sumOperators = operatorsMap.values().stream().mapToInt(Integer::intValue).sum();
+        int sumOperands = operandsMap.values().stream().mapToInt(Integer::intValue).sum();
+
+        XSSFRow sumRow = sheet.createRow(rowno++);
+        sumRow.createCell(0).setCellValue("Total");
+        sumRow.createCell(1).setCellValue(String.valueOf(sumOperators));
+        sumRow.createCell(2).setCellValue("Total");
+        sumRow.createCell(3).setCellValue(String.valueOf(sumOperands));
+
         file.close();
+
+        FileOutputStream outFile = new FileOutputStream(filePath);
+        workbook.write(outFile);
+        outFile.close();
         System.out.println("Data Copied to Excel");
     }
 

@@ -32,7 +32,7 @@ function convertToUppercase(text: string): string {
   return text.toUpperCase();
 }
 
-const result = addNumbers(3, 5);
+const result = addNumsbers(3, 5);
 console.log("Sum:", result); // Output: Sum: 8
 
 const numbers = [1, 2, 3, 4, 5];
